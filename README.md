@@ -39,6 +39,7 @@ Run `dep ensure` in the `src` directory
 ### Step 3 - Build docker image and run
 
 `make all` to build binaries and create the docker image
+
 `make docker-run` to run the image
 
 You will see similar output as users are synchronized:

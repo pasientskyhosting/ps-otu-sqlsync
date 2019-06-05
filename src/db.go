@@ -11,11 +11,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// Datastore ...
-type Datastore interface {
-	// AllUsers() ([]*User, error)
-}
-
 // DB ...
 type DB struct {
 	*sql.DB

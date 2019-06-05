@@ -250,7 +250,7 @@ func pollAPI(e *Env, db *DB) {
 						continue
 					}
 					cache.Set(u.username, u.expireTime)
-					log.Printf("Created user '%s'@'%s': Expires: %s", u.username, u.host, time.Unix(u.expireTime, 0))
+					log.Printf("Created user: '%s'@'%s' Expires: %s", u.username, u.host, time.Unix(u.expireTime, 0))
 				}
 			}
 		}

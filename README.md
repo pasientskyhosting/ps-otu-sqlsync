@@ -2,6 +2,7 @@
 
 ## Description
 Self-service access to MySQL/MariaDB using LDAP credentials
+
 MySQL Sync Service synchronizes one-time-users created in the One Time User service https://github.com/pasientskyhosting/ps-otu-ldap
 
 ## Quickstart

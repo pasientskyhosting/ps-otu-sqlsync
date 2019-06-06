@@ -2,12 +2,17 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Env ...
@@ -37,9 +42,21 @@ type single struct {
 	user map[string]int64
 }
 
-var cache = single{
-	user: make(map[string]int64),
-}
+var (
+	usersCreated = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "ps_otu_sqlsync_users_created_total",
+			Help: "The total number of users created",
+		})
+	usersDropped = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "ps_otu_sqlsync_users_dropped_total",
+			Help: "The total number of users dropped",
+		})
+	cache = single{
+		user: make(map[string]int64),
+	}
+)
 
 // Exists checks for value existing
 func (s *single) Exists(key string) bool {
@@ -205,6 +222,7 @@ func dropOTU(e *Env, db *DB) {
 					continue
 				}
 				cache.Delete(n.User)
+				usersDropped.Inc()
 				log.Printf("Dropped user: '%s'@'%s'\n", n.User, n.Host)
 			}
 		}
@@ -250,6 +268,7 @@ func pollAPI(e *Env, db *DB) {
 						continue
 					}
 					cache.Set(u.username, u.expireTime)
+					usersCreated.Inc()
 					log.Printf("Created user: '%s'@'%s' Expires: %s", u.username, u.host, time.Unix(u.expireTime, 0))
 				}
 			}
@@ -304,5 +323,8 @@ func main() {
 	defer db.Close()
 	go dropOTU(e, db)
 	go pollAPI(e, db)
+	// prometheus metrics
+	http.Handle("/metrics", promhttp.Handler())
+	http.ListenAndServe(":9597", nil)
 	mainloop()
 }

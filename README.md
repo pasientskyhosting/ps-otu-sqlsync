@@ -17,6 +17,7 @@ You need these environment variables:
 - `LDAP_GROUP` - Search for OTU bound to this LDAP group
 - `CLEANUP_INTERVAL` - How often (in seconds) to purge expired/retired users (default: 60) 
 - `POLL_INTERVAL` - How often (in seconds) to poll the OTU service (default: 60)
+- `METRICS_PORT` - Prometheus metrics port (default: 9597)
 
 ```
 export DB_USER=dbAccountWithUserManagementPrivs && \
@@ -27,7 +28,8 @@ export API_URL=https://my.otu.service/api/v1 && \
 export API_KEY=kjsdfJ79hY73eKh37Hedk98234Ghwhjd823kHY2kHY2 && \
 export LDAP_GROUP=galera-dev && \
 export CLEANUP_INTERVAL=60 && \
-export POLL_INTERVAL=60
+export POLL_INTERVAL=60 && \
+export METRICS_PORT=9597
 ```
 
 ### Step 2 - Install dependencies

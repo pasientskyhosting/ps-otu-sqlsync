@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -26,6 +27,7 @@ type Env struct {
 	ldapGroup       string
 	cleanupInterval int
 	pollInterval    int
+	metricsPort     string
 }
 
 type dbUser struct {
@@ -106,7 +108,8 @@ func newEnv(
 	apiKey string,
 	ldapGroup string,
 	cleanupInterval int,
-	pollInterval int) *Env {
+	pollInterval int,
+	metricsPort string) *Env {
 
 	if dbUser == "" {
 		log.Fatalf("Could not parse env DB_USER")
@@ -135,6 +138,9 @@ func newEnv(
 	if pollInterval == 0 {
 		pollInterval = 60
 	}
+	if metricsPort == "" {
+		metricsPort = "9597"
+	}
 
 	e := Env{
 		dbUser:          dbUser,
@@ -146,6 +152,7 @@ func newEnv(
 		ldapGroup:       ldapGroup,
 		cleanupInterval: cleanupInterval,
 		pollInterval:    pollInterval,
+		metricsPort:     metricsPort,
 	}
 
 	log.Printf("otu-sqlsync service started with env: %+v\n\n", e)
@@ -314,6 +321,7 @@ func main() {
 		os.Getenv("LDAP_GROUP"),
 		getenvInt("CLEANUP_INTERVAL"),
 		getenvInt("POLL_INTERVAL"),
+		os.Getenv("METRICS_PORT"),
 	)
 	// prepare database
 	db, err := prepareDatabase(e)
@@ -325,6 +333,6 @@ func main() {
 	go pollAPI(e, db)
 	// prometheus metrics
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":9597", nil)
+	http.ListenAndServe(fmt.Sprintf(":%s", e.metricsPort), nil)
 	mainloop()
 }

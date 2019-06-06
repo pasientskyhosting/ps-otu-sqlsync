@@ -104,6 +104,7 @@ func GrantPermissions(db *DB, privilege string, level string, user string, host 
 	/*
 		Parameterized statements can not be used with CREATE, DROP, GRANT etc.
 	*/
+
 	_, err = db.Exec(fmt.Sprintf("GRANT %s ON %s TO '%s'@'%s'", privilege, level, user, host))
 	if err != nil {
 		return err

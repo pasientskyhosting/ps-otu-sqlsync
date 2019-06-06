@@ -5,6 +5,39 @@ Self-service access to MySQL/MariaDB using LDAP credentials
 
 MySQL Sync Service synchronizes one-time-users created in the One Time User service https://github.com/pasientskyhosting/ps-otu-ldap
 
+### One Time User Service - Custom props
+The following custom props should be set on your OTU group to configure host and privileges for OTU accounts
+
+Key `priv_type` - Privilege types for the GRANT statement
+
+Example values
+- `ALL`
+- `SELECT`
+- `INSERT`
+- `CREATE`
+- `UPDATE`
+- `SELECT,INSERT`
+- etc.
+
+Key `priv_level` - Privilege level
+
+Example values
+- `*`
+- `*.*`
+- `db_name.*`
+- `db_name.tbl_name`
+- `tbl_name`
+- `db_name.routine_name`
+
+Key `host` 
+
+Example values
+- `%`
+- `localhost`
+- `127.0.0.1`
+- `198.51.100.%`
+- `198.51.100.0/255.255.255.0`
+
 ## Quickstart
 
 ### Step 1 - Setup env

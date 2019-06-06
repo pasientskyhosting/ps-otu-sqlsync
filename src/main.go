@@ -45,6 +45,11 @@ type single struct {
 }
 
 var (
+	dbStatus = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "ps_otu_sqlsync_db_status",
+			Help: "Database connection status",
+		})
 	usersCreated = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "ps_otu_sqlsync_users_created_total",
@@ -218,6 +223,11 @@ func dropOTU(e *Env, db *DB) {
 	for {
 		select {
 		case <-ticker:
+			if err := db.Ping(); err != nil {
+				dbStatus.Set(0)
+			} else {
+				dbStatus.Set(1)
+			}
 			user, err := GetExpiredUsers(db)
 			if err != nil {
 				log.Printf("%s", err)

@@ -10,6 +10,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"text/tabwriter"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -159,8 +160,8 @@ func newEnv(
 		pollInterval:    pollInterval,
 		metricsPort:     metricsPort,
 	}
-
-	log.Printf("otu-sqlsync service started with env: %+v\n\n", e)
+	log.Printf("\tps-otu-sqlsync service started...")
+	log.Printf("\tSQL server: %s\tAPI URL: %s\tLDAP Group: %s\tMetrics port: %s\n\n", e.dbServer, e.apiURL, e.ldapGroup, e.metricsPort)
 
 	return &e
 }
@@ -220,17 +221,17 @@ func dropOTU(e *Env, db *DB) {
 			}
 			user, err := GetExpiredUsers(db)
 			if err != nil {
-				log.Printf("%s", err)
+				log.Printf("\t%s", err)
 			}
 			for _, n := range user {
 				err = DropUser(db, n)
 				if err != nil {
-					log.Printf("%s", err)
+					log.Printf("\t%s", err)
 					continue
 				}
 				cache.Delete(n.User)
 				usersDropped.Inc()
-				log.Printf("Dropped user: '%s'@'%s'\n", n.User, n.Host)
+				log.Printf("\tDropped user: '%s'@'%s'\n", n.User, n.Host)
 			}
 		}
 	}
@@ -255,28 +256,28 @@ func pollAPI(e *Env, db *DB) {
 		case <-ticker:
 			otu, err := getOTU(e)
 			if err != nil {
-				log.Printf("%s", err)
+				log.Printf("\t%s", err)
 				continue
 			}
 			err = expireOTU(e, db, otu)
 			if err != nil {
-				log.Printf("%s", err)
+				log.Printf("\t%s", err)
 			}
 			for _, u := range otu {
 				if !cache.Exists(u.username) {
 					err = CreateUser(db, u.host, u.username, u.password, u.expireTime)
 					if err != nil {
-						log.Printf("%s", err)
+						log.Printf("\t%s", err)
 						continue
 					}
 					err = GrantPermissions(db, u.privType, u.privLevel, u.username, u.host)
 					if err != nil {
-						log.Printf("%s", err)
+						log.Printf("\t%s", err)
 						continue
 					}
 					cache.Set(u.username, u.expireTime)
 					usersCreated.Inc()
-					log.Printf("Created user: '%s'@'%s' Expires: %s", u.username, u.host, time.Unix(u.expireTime, 0))
+					log.Printf("\tCreated user: '%s'@'%s'\tExpires: %s", u.username, u.host, time.Unix(u.expireTime, 0))
 				}
 			}
 		}
@@ -311,6 +312,9 @@ func main() {
 			log.Fatalln(err)
 		}
 	}()
+	// create a new tabwriter
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 0, 2, ' ', tabwriter.Debug)
 	// get env
 	e := newEnv(os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),

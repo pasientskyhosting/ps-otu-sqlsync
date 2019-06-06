@@ -217,6 +217,6 @@ func prepareDatabase(e *Env) (*DB, error) {
 		db.Close()
 		return nil, err
 	}
-	log.Printf("Successfully prepared ps_otu_sql database...")
+	log.Printf("\tSuccessfully prepared ps_otu_sql database...")
 	return db, err
 }

@@ -165,18 +165,8 @@ func newEnv(
 	return &e
 }
 
-// TODO - ask Karsten to return a plain dictionary so we don't need this
-func getCustomProps(cp []CustomProperties) map[string]string {
-	m := make(map[string]string)
-	for _, p := range cp {
-		m[p.Key] = p.Value
-	}
-	return m
-}
-
-// TODO - some defaults because the otu frontend doesn't allow special chars
-// ask Karsten to fix and get rid of this
-func getSQLProps(m map[string]string) map[string]string {
+// set Custom Properties defaults
+func setDefaultCustomProps(m map[string]string) map[string]string {
 	_, e := m["priv_type"]
 	if !e {
 		m["priv_type"] = "SELECT"
@@ -199,7 +189,7 @@ func getOTU(e *Env) ([]dbUser, error) {
 		return nil, err
 	}
 	for _, g := range group {
-		cp := getSQLProps(getCustomProps(g.CustomProperties))
+		g.CustomProperties = setDefaultCustomProps(g.CustomProperties)
 		user, err := getAPIUser(e, g.GroupName)
 		if err != nil {
 			return nil, err
@@ -208,9 +198,9 @@ func getOTU(e *Env) ([]dbUser, error) {
 			su = append(su, dbUser{
 				username:   u.Username,
 				password:   u.Password,
-				host:       cp["host"],
-				privType:   cp["priv_type"],
-				privLevel:  cp["priv_level"],
+				host:       g.CustomProperties["host"],
+				privType:   g.CustomProperties["priv_type"],
+				privLevel:  g.CustomProperties["priv_level"],
 				expireTime: u.ExpireTime,
 			})
 		}

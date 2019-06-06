@@ -11,18 +11,12 @@ import (
 
 // APIGroup desc
 type APIGroup struct {
-	GroupName        string             `json:"group_name"`
-	LdapGroupName    string             `json:"ldap_group_name"`
-	CustomProperties []CustomProperties `json:"custom_properties"`
-	LeaseTime        int                `json:"lease_time"`
-	CreateTime       int64              `json:"create_time"`
-	CreateBy         string             `json:"create_by"`
-}
-
-// CustomProperties desc
-type CustomProperties struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	GroupName        string            `json:"group_name"`
+	LdapGroupName    string            `json:"ldap_group_name"`
+	CustomProperties map[string]string `json:"custom_properties"`
+	LeaseTime        int               `json:"lease_time"`
+	CreateTime       int64             `json:"create_time"`
+	CreateBy         string            `json:"create_by"`
 }
 
 // APIUser def

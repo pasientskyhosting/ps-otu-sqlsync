@@ -7,10 +7,11 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
-	"time"
 	"text/tabwriter"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -25,7 +26,7 @@ type Env struct {
 	dbPort          string
 	apiURL          string
 	apiKey          string
-	ldapGroup       string
+	ldapGroups      []string
 	cleanupInterval int
 	pollInterval    int
 	metricsPort     string
@@ -112,7 +113,7 @@ func newEnv(
 	dbPort string,
 	apiURL string,
 	apiKey string,
-	ldapGroup string,
+	ldapGroups []string,
 	cleanupInterval int,
 	pollInterval int,
 	metricsPort string) *Env {
@@ -135,8 +136,8 @@ func newEnv(
 	if apiKey == "" {
 		log.Fatalf("Could not parse env API_KEY")
 	}
-	if apiKey == "" {
-		log.Fatalf("Could not parse env LDAP_GROUP")
+	if len(ldapGroups) == 0 {
+		log.Fatalf("Could not parse env LDAP_GROUPS")
 	}
 	if cleanupInterval == 0 {
 		cleanupInterval = 60
@@ -155,13 +156,13 @@ func newEnv(
 		dbPort:          dbPort,
 		apiURL:          apiURL,
 		apiKey:          apiKey,
-		ldapGroup:       ldapGroup,
+		ldapGroups:      ldapGroups,
 		cleanupInterval: cleanupInterval,
 		pollInterval:    pollInterval,
 		metricsPort:     metricsPort,
 	}
 	log.Printf("\tps-otu-sqlsync service started...")
-	log.Printf("\tSQL server: %s\tAPI URL: %s\tLDAP Group: %s\tMetrics port: %s\n\n", e.dbServer, e.apiURL, e.ldapGroup, e.metricsPort)
+	log.Printf("\tSQL server: %s\tAPI URL: %s\tLDAP Groups: %s\tMetrics port: %s\n\n", e.dbServer, e.apiURL, e.ldapGroups, e.metricsPort)
 
 	return &e
 }
@@ -185,11 +186,11 @@ func setDefaultCustomProps(m map[string]string) map[string]string {
 
 func getOTU(e *Env) ([]dbUser, error) {
 	su := []dbUser{}
-	group, err := getAPIGroup(e)
+	groups, err := getAPIGroups(e)
 	if err != nil {
 		return nil, err
 	}
-	for _, g := range group {
+	for _, g := range groups {
 		g.CustomProperties = setDefaultCustomProps(g.CustomProperties)
 		user, err := getAPIUser(e, g.GroupName)
 		if err != nil {
@@ -322,7 +323,7 @@ func main() {
 		os.Getenv("DB_PORT"),
 		os.Getenv("API_URL"),
 		os.Getenv("API_KEY"),
-		os.Getenv("LDAP_GROUP"),
+		strings.Split(os.Getenv("LDAP_GROUPS"), ","),
 		getenvInt("CLEANUP_INTERVAL"),
 		getenvInt("POLL_INTERVAL"),
 		os.Getenv("METRICS_PORT"),

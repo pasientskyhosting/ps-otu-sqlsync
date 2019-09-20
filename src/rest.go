@@ -29,32 +29,36 @@ type APIUser struct {
 	CreateBy   string `json:"create_by"`
 }
 
-func getAPIGroup(e *Env) ([]APIGroup, error) {
-	var group = []APIGroup{}
+func getAPIGroups(e *Env) ([]APIGroup, error) {
+	var groups = []APIGroup{}
 	timeout := time.Duration(5 * time.Second)
 	client := http.Client{
 		Timeout: timeout,
 	}
-	req, err := http.NewRequest("GET", e.apiURL, nil)
-	if err != nil {
-		return nil, err
+	for _, ldapGroup := range e.ldapGroups {
+		req, err := http.NewRequest("GET", e.apiURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Add("X-API-KEY", e.apiKey)
+		req.URL.Path = path.Join(req.URL.Path, fmt.Sprintf("/ldap-groups/%s/groups", ldapGroup))
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		var group = []APIGroup{}
+		err = json.Unmarshal(body, &group)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, group...)
 	}
-	req.Header.Add("X-API-KEY", e.apiKey)
-	req.URL.Path = path.Join(req.URL.Path, fmt.Sprintf("/ldap-groups/%s/groups", e.ldapGroup))
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(body, &group)
-	if err != nil {
-		return nil, err
-	}
-	return group, nil
+	return groups, nil
 }
 
 func getAPIUser(e *Env, groupName string) ([]APIUser, error) {

@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strconv"
 	"time"
 )
 
@@ -47,6 +49,11 @@ func getAPIGroups(e *Env) ([]APIGroup, error) {
 			return nil, err
 		}
 		defer resp.Body.Close()
+		// Success is indicated with 2xx status codes:
+		statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
+		if !statusOK {
+			return nil, errors.New("OTU service responded with status code: " + strconv.Itoa(resp.StatusCode))
+		}
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
@@ -78,6 +85,11 @@ func getAPIUser(e *Env, groupName string) ([]APIUser, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	// Success is indicated with 2xx status codes:
+	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !statusOK {
+		return nil, errors.New("OTU service responded with status code: " + strconv.Itoa(resp.StatusCode))
+	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
